@@ -47,3 +47,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Ignore CSV files
+*.csv
+
+# Ignore RDS files
+*.rds
