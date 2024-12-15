@@ -7,3 +7,17 @@ date: 12/15/2024
 
 ## Summary
 
+This notebook analyzes data from The Marshall Project's survey of 54,000 incarcerated individuals before the 2024 election.  The data has been aggregated by facility and filtered to include only 
+
+### Load packages
+
+```{r}
+library(tidyverse)
+library(janitor)
+```
+
+### Load data
+```{r}
+
+```
+
