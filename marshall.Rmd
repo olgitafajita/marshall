@@ -7,17 +7,96 @@ date: 12/15/2024
 
 ## Summary
 
-This notebook analyzes data from The Marshall Project's survey of 54,000 incarcerated individuals before the 2024 election.  The data has been aggregated by facility and filtered to include only 
+This notebook analyzes data from The Marshall Project's survey of 54,000 incarcerated individuals before the 2024 election.  The data has been aggregated by facility and filtered to include only those in jails.  Note: Cell sizes <5 are suppressed. Data is unweighted and not representative.
 
-### Load packages
+## Load packages
 
 ```{r}
 library(tidyverse)
 library(janitor)
 ```
 
-### Load data
-```{r}
+## Data thoughts
 
+The Marshall Project's coverage has already included a national overview story that simply walks readers through the poll results, so simply summarizing the findings is probably not productive.  It's also post-election so we're not all still scouring the news looking for information about how any group might vote.
+
+I've decided to use the answer set all-surveys because this set has more respondents typically and the choice between Trump and Biden/Harris is a bit less newsworthy at this point.
+
+## Load data
+```{r}
+data <- read_csv("28698c11-aa5a-4dfb-afeb-549052c6b32e.csv") %>% clean_names()
 ```
 
+# Analysis
+## Filter for just the all-surveys dataset
+```{r}
+all_surveys <- data %>% filter(answer_set == "all-surveys")
+```
+21,320 rows
+
+## Investigate data structure
+```{r}
+all_surveys %>% filter(facility_name == "Albany County Correctional Facility, NY")
+```
+
+It looks like every row is repeated twice in the data, once under 'all states' in the state column and once with the specific state 
+
+```{r}
+# keep rows where we know the state
+all_surveys_national <- all_surveys %>% filter(state != "0_ALL_STATES")
+```
+10,660 rows, or half, which is what we expect
+
+# Analysis
+The prompt asks us to look for storytelling angles about the political opinions of incarcerated people in the context of increasing voting rights for the formerly incarcerated and increased access to voting for people incarcerated in jail who have the right to vote.
+
+Post-election, the most interesting stories to me are forward-looking, as opposed to angles related to who people voted for and why.
+
+To me the question with the most pathos is actually related to whether people with convictions should vote.  
+
+### Create convicted-vote dataset
+```{r}
+convicted_vote <- all_surveys_national %>% filter(is.na(people_with_convictions_should_vote) == FALSE)
+```
+
+Hmm, looks like we only have responses to this question from a handful of facilities. It's a reporting question whether that's an error in the data or an artifact of survey design. Either way, maybe we steer clear of that question.
+
+### Skills for politics
+Looks we have more results here, so we'll go with this one.
+
+```{r}
+skills <- all_surveys_national %>% filter(is.na(skills_for_politics) == FALSE)
+```
+
+The solutions journalism part of my brain is interested in whether there are facilities that are getting this right.
+
+```{r}
+head(skills %>% filter(skills_for_politics == "Strongly agree") %>% arrange(desc(pct_of_respondents)))
+```
+#### Visualize distribution
+```{r}
+# Create a histogram
+skills %>% 
+ggplot(aes(x = pct_of_respondents)) + 
+  geom_histogram(
+    bins = 20,                     
+    fill = "slateblue1",        
+    color = "slateblue3",              
+    alpha = 0.8                    
+  ) +
+  facet_wrap(~skills_for_politics) +
+  theme_minimal() +                        
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"), 
+    axis.title = element_text(size = 12),              axis.text = element_text(size = 10),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank()
+  )
+```
+
+```{r}
+skills %>% filter(skills_for_politics == "Disagree") %>% arrange(desc(pct_of_respondents))
+```
+
+Looks like there is substantial variation between facilities in terms of incarcerated people's confidence.  With access to underlying data for cross tabulation, we could ask questions about why they might be more or less confident in their abilities.  If there is a facility component, solid solutions reportage could be done around whether facilities should do more to help their residents function in democracy.
